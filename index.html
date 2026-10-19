@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#05070a" />
+    <title>PINPIN II — шёпот леса</title>
+    <link rel="stylesheet" href="/src/style.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23070b10'/%3E%3Ccircle cx='32' cy='32' r='18' fill='none' stroke='%23b8f3ff' stroke-width='3'/%3E%3Ccircle cx='40' cy='26' r='4' fill='%23b8f3ff'/%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app">
+      <!-- ============================ MAIN MENU ============================ -->
+      <section id="menu" class="screen active">
+        <div class="menu-bg"></div>
+        <div class="menu-top">
+          <div class="logo">
+            <div class="logo-glitch" data-text="PINPIN">PINPIN</div>
+            <div class="logo-sub">II · ШЁПОТ ЛЕСА</div>
+          </div>
+          <div class="menu-meta">
+            <span class="pill" id="menu-version">v2.0</span>
+            <span class="pill" data-i18n="menu.players">1–10 игроков · средне 4</span>
+          </div>
+        </div>
+
+        <div class="menu-body">
+          <div class="menu-main">
+            <label class="field" data-i18n="menu.nickname">Позывной</label>
+            <input id="nick" class="input" maxlength="16" autocomplete="off" spellcheck="false" placeholder="ПИН-ПИН" />
+            <div class="row">
+              <label class="field inline" data-i18n="menu.mic">Микрофон</label>
+              <select id="mic-select" class="input select small"></select>
+              <button id="mic-test" class="btn icon" title="Проверить микрофон">🎙</button>
+            </div>
+            <div class="mic-meter-wrap">
+              <div class="mic-meter"><div id="menu-mic-level" class="mic-meter-fill"></div></div>
+              <span class="hint" data-i18n="menu.micHint">Громкость микрофона</span>
+            </div>
+            <div class="row">
+              <label class="field inline" data-i18n="menu.sens">Чувствительность голоса</label>
+              <input id="mic-sens" class="slider" type="range" min="0.2" max="3" step="0.05" value="1" />
+              <span id="mic-sens-val" class="mono small">1.00×</span>
+            </div>
+            <div class="row">
+              <label class="field inline" data-i18n="menu.lang">Язык</label>
+              <div class="seg" id="lang-seg">
+                <button class="seg-btn" data-lang="ru">RU</button>
+                <button class="seg-btn" data-lang="en">EN</button>
+              </div>
+            </div>
+
+            <div class="menu-buttons">
+              <button id="btn-single" class="btn primary" data-i18n="menu.single">Одиночная вылазка</button>
+              <button id="btn-host" class="btn" data-i18n="menu.host">Создать хаб</button>
+              <button id="btn-join-toggle" class="btn" data-i18n="menu.join">Подключиться</button>
+            </div>
+            <div id="join-box" class="join-box hidden">
+              <input id="join-code" class="input code" maxlength="10" placeholder="КОД ХАБА" spellcheck="false" />
+              <button id="btn-join" class="btn primary" data-i18n="menu.joinGo">Войти</button>
+            </div>
+            <div id="lobby-status" class="lobby-status"></div>
+            <div id="menu-error" class="error hidden"></div>
+            <div class="menu-hint">
+              <p data-i18n="menu.about">Ночной лес слышит тебя. Крикни — и увидишь эхо. Но и они услышат.</p>
+            </div>
+          </div>
+          <div class="menu-side">
+            <div class="panel controls-help">
+              <h3 data-i18n="menu.controls">Управление</h3>
+              <div class="kb"><kbd>W A S D</kbd><span data-i18n="ctrl.move">движение</span></div>
+              <div class="kb"><kbd>Shift</kbd><span data-i18n="ctrl.run">бег</span></div>
+              <div class="kb"><kbd>Ctrl</kbd><span data-i18n="ctrl.crouch">красться</span></div>
+              <div class="kb"><kbd>Space</kbd><span data-i18n="ctrl.jump">прыжок</span></div>
+              <div class="kb"><kbd>E</kbd><span data-i18n="ctrl.use">взаимодействие</span></div>
+              <div class="kb"><kbd>Q</kbd><span data-i18n="ctrl.ping">голос / эхолокация</span></div>
+              <div class="kb"><kbd>Tab</kbd><span data-i18n="ctrl.inv">3D-инвентарь</span></div>
+              <div class="kb"><kbd>C</kbd><span data-i18n="ctrl.clock">часы-«касио»</span></div>
+              <div class="kb"><kbd>Esc</kbd><span data-i18n="ctrl.pause">пауза</span></div>
+            </div>
+            <div class="panel panel-dim">
+              <h3 data-i18n="menu.features">Особенности</h3>
+              <ul class="feature-list">
+                <li data-i18n="feat.1">Эхолокация: крик, микрофон, эхо-силуэты</li>
+                <li data-i18n="feat.2">Ночь длиннее дня, лес генерируется процедурно</li>
+                <li data-i18n="feat.3">Хаб: модели игроков и настройка микрофона</li>
+                <li data-i18n="feat.4">Библиотекарь: враг, идущий на звук</li>
+                <li data-i18n="feat.5">P2P-хостинг в браузере</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="menu-foot">
+          <span class="hint" data-i18n="menu.footNote">Наушники обязательны — слушай лес.</span>
+        </div>
+      </section>
+
+      <!-- ============================ HUB (interactive) ============================ -->
+      <section id="hub" class="screen">
+        <canvas id="hub-canvas"></canvas>
+        <div id="hub-ui" class="hub-ui">
+          <div class="hub-head">
+            <div class="hub-title">
+              <div class="logo-sub" data-i18n="hub.sub">ХАБ · ЛАГЕРЬ У КОСТРА</div>
+              <h2 id="hub-code" class="mono"></h2>
+            </div>
+            <div class="hub-head-right">
+              <button id="hub-lang" class="btn icon" title="RU/EN">RU</button>
+              <button id="hub-help" class="btn icon" title="?">?</button>
+            </div>
+          </div>
+
+          <div id="hub-players" class="hub-players"></div>
+
+          <div id="hub-panel" class="hub-panel">
+            <div class="hp-row">
+              <span class="hp-label" data-i18n="hub.micVol">Громкость микрофона</span>
+              <div class="mic-meter"><div id="hub-mic-level" class="mic-meter-fill"></div></div>
+            </div>
+            <label class="hp-label small" data-i18n="hub.micSens">Чувствительность</label>
+            <input id="hub-sens" class="slider" type="range" min="0.2" max="3" step="0.05" value="1" />
+            <div class="row">
+              <label class="hp-label small" data-i18n="hub.micSel">Вход</label>
+              <select id="hub-mic-select" class="input select small"></select>
+            </div>
+            <div class="row">
+              <label class="hp-label small" data-i18n="hub.vol">Общая громкость</label>
+              <input id="hub-vol" class="slider" type="range" min="0" max="1" step="0.02" value="0.8" />
+            </div>
+            <p class="hint" id="hub-mic-note"></p>
+          </div>
+
+          <div id="hub-bottom" class="hub-bottom">
+            <div class="hub-bottom-inner">
+              <button id="hub-start" class="btn primary big" data-i18n="hub.start">В лес</button>
+              <button id="hub-ready" class="btn" data-i18n="hub.ready">Готов</button>
+              <button id="hub-leave" class="btn" data-i18n="hub.leave">В меню</button>
+            </div>
+            <div class="hub-tip" data-i18n="hub.tip">ЛКМ — вращать камеру · колесо — приблизить · WASD — ходить по хребту</div>
+          </div>
+        </div>
+        <div id="hub-toast" class="toast hidden"></div>
+      </section>
+
+      <!-- ============================ GAME ============================ -->
+      <section id="game" class="screen">
+        <canvas id="game-canvas"></canvas>
+
+        <div id="hud" class="hud">
+          <div class="hud-top">
+            <div id="hud-clock" class="hud-clock">
+              <div id="clock-face" class="clock-face casio"></div>
+              <div id="phase-label" class="phase-label"></div>
+              <div id="phase-progress" class="phase-progress"><div></div></div>
+            </div>
+            <div id="hud-party" class="hud-party"></div>
+            <div class="hud-top-right">
+              <span id="hud-connection" class="pill tiny">P2P</span>
+              <button id="hud-help" class="btn icon ghost" title="?">?</button>
+              <button id="hud-lang" class="btn icon ghost" title="RU/EN">RU</button>
+            </div>
+          </div>
+
+          <div id="hud-vitals" class="hud-vitals">
+            <div class="vital">
+              <span class="vital-ico">♥</span>
+              <div class="bar"><div id="health-fill" class="bar-fill health"></div></div>
+            </div>
+            <div class="vital">
+              <span class="vital-ico">⚡</span>
+              <div class="bar"><div id="stamina-fill" class="bar-fill stamina"></div></div>
+            </div>
+            <div id="heard" class="heard" title="Уровень шума"></div>
+          </div>
+
+          <div id="noise-meter" class="noise-meter">
+            <div id="noise-fill" class="noise-fill"></div>
+            <span class="noise-label" data-i18n="hud.noise">ШУМ</span>
+          </div>
+
+          <div id="equip" class="equip">
+            <canvas id="watch-canvas" class="watch-mini" width="180" height="110"></canvas>
+            <div id="equip-text" class="equip-text"></div>
+          </div>
+
+          <div id="objective" class="objective"></div>
+          <div id="toast" class="toast hidden"></div>
+          <div id="crosshair" class="crosshair"></div>
+          <div id="interact-hint" class="interact-hint hidden"></div>
+          <div id="whisper" class="whisper hidden"></div>
+          <div id="speak-indicator" class="speak-indicator hidden">
+            <span data-i18n="hud.speaking">МИКРОФОН</span><div id="speak-level" class="speak-level"></div>
+          </div>
+          <div id="danger-vignette" class="danger-vignette"></div>
+          <div id="echo-flash" class="echo-flash"></div>
+          <div id="downed" class="downed hidden">
+            <h2 data-i18n="hud.downed">Ты упал</h2>
+            <p data-i18n="hud.downedHint">Товарищи могут поднять тебя, если услышат шёпот.</p>
+            <button id="btn-respawn" class="btn" data-i18n="hud.toHub">В хаб</button>
+          </div>
+        </div>
+
+        <div id="inventory" class="inventory hidden"></div>
+        <div id="watch-view" class="watch-view hidden"></div>
+        <div id="minimap-wrap" class="minimap-wrap">
+          <canvas id="minimap" width="220" height="220"></canvas>
+          <div class="minimap-label" data-i18n="hud.map">КАРТА · ТОЛЬКО ПАМЯТЬ</div>
+        </div>
+      </section>
+
+      <!-- ============================ PAUSE ============================ -->
+      <section id="pause" class="screen overlay">
+        <div class="dialog">
+          <h2 data-i18n="pause.title">ПАУЗА</h2>
+          <div class="col">
+            <button id="pause-resume" class="btn primary" data-i18n="pause.resume">Продолжить</button>
+            <button id="pause-help" class="btn" data-i18n="pause.help">Управление</button>
+            <button id="pause-hub" class="btn" data-i18n="pause.hub">В хаб</button>
+            <button id="pause-menu" class="btn" data-i18n="pause.menu">Главное меню</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="help" class="screen overlay">
+        <div class="dialog wide">
+          <h2 data-i18n="help.title">КАК ВЫЖИТЬ В ЛЕСУ</h2>
+          <div id="help-body" class="help-body"></div>
+          <button id="help-close" class="btn primary" data-i18n="pause.resume">Продолжить</button>
+        </div>
+      </section>
+
+      <div id="loading" class="loading"><div class="spinner"></div><span data-i18n="loading">Лес просыпается…</span></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
