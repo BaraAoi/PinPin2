@@ -40,6 +40,32 @@ const ICE = {
   sdpSemantics: 'unified-plan',
 };
 
+/**
+ * Optional self-hosted signalling server. Set `?peer=host:port` (or the global
+ * `__PINPIN_PEER__`) to point every peer at your own PeerJS server; without it
+ * the public PeerJS cloud broker is used.
+ */
+function peerServerConfig(): { host: string; port: number; path: string; secure: boolean } | null {
+  const global = (window as unknown as { __PINPIN_PEER__?: string }).__PINPIN_PEER__;
+  let raw = global ?? '';
+  try {
+    const params = new URLSearchParams(location.search);
+    raw = params.get('peer') ?? raw;
+  } catch {
+    /* ignore */
+  }
+  if (!raw) return null;
+  const secure = raw.startsWith('https://') || raw.startsWith('wss://');
+  const cleaned = raw.replace(/^\w+:\/\//, '');
+  const [host, portRaw] = cleaned.split(':');
+  return {
+    host: host || 'localhost',
+    port: Number(portRaw) || (secure ? 443 : 9000),
+    path: '/',
+    secure,
+  };
+}
+
 export class Net {
   role: NetRole = 'solo';
   selfId = 'self';
@@ -56,6 +82,7 @@ export class Net {
   private handlers: { [K in keyof NetEvents]?: Handler<NetEvents[K]>[] } = {};
   private pingTimer = 0;
   private joinTimeout = 0;
+  private pingInterval = 0;
 
   on<K extends keyof NetEvents>(event: K, handler: Handler<NetEvents[K]>): void {
     const list = (this.handlers[event] as Handler<NetEvents[K]>[] | undefined) ?? [];
@@ -96,7 +123,7 @@ export class Net {
     this.code = roomCode;
     const hostId = PREFIX + roomCode;
     this.selfId = 'host';
-    const peer = new Peer(hostId, { debug: 1, config: ICE });
+    const peer = new Peer(hostId, { debug: 1, config: ICE, ...(peerServerConfig() ?? {}) });
     this.peer = peer;
 
     await new Promise<void>((resolve, reject) => {
@@ -130,7 +157,7 @@ export class Net {
       if (type !== 'peer-unavailable') console.warn('peer error', type, err);
     });
 
-    window.setInterval(() => this.measurePing(), 4000);
+    this.startPingLoop();
     return roomCode;
   }
 
@@ -193,7 +220,7 @@ export class Net {
     this.code = code.toUpperCase().trim();
     this.selfId = 'client';
     const hostId = PREFIX + this.code;
-    const peer = new Peer({ debug: 1, config: ICE });
+    const peer = new Peer({ debug: 1, config: ICE, ...(peerServerConfig() ?? {}) });
     this.peer = peer;
     await new Promise<void>((resolve, reject) => {
       const timeout = window.setTimeout(() => reject(new Error('timeout')), 15000);
@@ -249,7 +276,7 @@ export class Net {
         /* ignore */
       }
     });
-    window.setInterval(() => this.measurePing(), 4000);
+    this.startPingLoop();
   }
 
   private registerIncomingCall(call: MediaConnection): void {
@@ -378,6 +405,11 @@ export class Net {
     this.broadcast(msg);
   }
 
+  private startPingLoop(): void {
+    window.clearInterval(this.pingInterval);
+    this.pingInterval = window.setInterval(() => this.measurePing(), 4000);
+  }
+
   private measurePing(): void {
     if (!this.connected) return;
     this.pingTimer = performance.now();
@@ -397,6 +429,8 @@ export class Net {
   }
 
   close(): void {
+    window.clearInterval(this.pingInterval);
+    window.clearTimeout(this.joinTimeout);
     this.stopVoice();
     for (const call of this.mediaCalls.values()) {
       try {

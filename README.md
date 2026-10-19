@@ -55,9 +55,20 @@ npm run typecheck
 npm run build      # static build in dist/
 ```
 
-Publish `dist/` to GitHub Pages (Settings → Pages → *Deploy from a branch*), or
-run `npm run build` in a workflow. `vite.config.ts` uses `base: './'` so the
-build works from any subpath.
+Publish `dist/` to GitHub Pages (Settings → Pages → *GitHub Actions*); the
+workflow in `.github/workflows/deploy.yml` builds and deploys on every push to
+`main`. `vite.config.ts` uses `base: './'` so the build works from any subpath.
+
+### Self-hosted signalling
+
+By default the game talks to the public PeerJS cloud broker. For a LAN party or
+a private deployment, run your own signalling server and point the client at it:
+
+```bash
+npx peerjs --port 9000          # or any PeerJS server
+# then open the game as:
+https://you.github.io/PinPin2/?peer=yourserver:9000
+```
 
 ## Tech
 

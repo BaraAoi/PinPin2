@@ -374,6 +374,13 @@ export class GameSession {
       }
       case 'busy': {
         this.hud.toast(t(this.lang, 'error.full'), 'warn', 5);
+        window.setTimeout(() => {
+          if (!this.exited) this.exitTo('menu');
+        }, 1600);
+        break;
+      }
+      case 'toHub': {
+        this.exitTo('hub');
         break;
       }
       case 'ping': {
@@ -433,7 +440,7 @@ export class GameSession {
         const radius = Number(msg.radius) || 46;
         const strength = Number(msg.strength) || 1;
         const kind = (msg.kind as 'voice' | 'mic' | 'stone') ?? 'voice';
-        this.emitPulse(x, y, z, { maxRadius: radius, strength, kind, owner: from }, { visualOnly: false, alreadyHeard: true });
+        this.emitPulse(x, y, z, { maxRadius: radius, strength, kind, owner: from });
         this.net.broadcast({ t: 'pulse', x, y, z, radius, strength, kind, owner: from }, from);
         break;
       }
@@ -479,7 +486,7 @@ export class GameSession {
   private emitPulse(
     x: number, y: number, z: number,
     opts: { maxRadius?: number; strength?: number; kind?: 'voice' | 'mic' | 'stone' | 'enemy'; owner?: string; color?: number },
-    meta: { visualOnly?: boolean; alreadyHeard?: boolean } = {},
+    meta: { visualOnly?: boolean } = {},
   ): void {
     const origin = new Vector3(x, y, z);
     this.echo.emit(origin, {
@@ -498,8 +505,6 @@ export class GameSession {
     } else {
       this.net.send({ t: 'pulse', x, y, z, radius: opts.maxRadius ?? 46, strength: opts.strength ?? 1, kind: opts.kind ?? 'voice', owner: this.net.selfId });
     }
-    void meta.alreadyHeard;
-    // always send a separate quiet noise event for footsteps-scale sounds if needed
   }
 
   private shout(): void {
@@ -1503,6 +1508,7 @@ export class GameSession {
     if (this.exited) return;
     this.exited = true;
     if (this.role === 'client') this.net.send({ t: 'bye', name: this.player.name });
+    if (this.role === 'host') this.net.broadcast({ t: 'toHub', to });
     this.stop();
     this.onExit(to);
   }
